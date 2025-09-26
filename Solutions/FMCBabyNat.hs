@@ -35,17 +35,17 @@ infixl 6 +
 -- Output: O means False, S O means True
 isZero :: Nat -> Nat
 isZero O = S O
-isZero (S _) = O
+isZero (S _ ) = O
 
 -- pred is the predecessor but we define zero's to be zero
 pred :: Nat -> Nat
 pred O = O 
-pred (S m) = m 
+pred (S m ) = m 
 
 -- Output: O means False, S O means True
 even :: Nat -> Nat
-even O         = S O -- Zero é par, então retorna Verdadeiro (S O)
-even (S O)     = O   -- Um é ímpar, então retorna Falso (O)
+even O = S O
+even (S O) = O   
 even (S (S m)) = even m
 
 
@@ -93,44 +93,61 @@ n / m =
         O -> S O
         _ -> O
     S k ->
-      S ((S k) / m)
+      S ((S k) / m) -- aqui consegui fazer a recursão
+infixl 7 / 
 
-infixl 7 / -- parei por hoje..
-
-{- primeira tentativa -- error
- O / _ = O
-n / m | isZero (n <= m) == O = S O + ((n -* m) / m)
-      | otherwise            = O
-infixl 7 /  -} 
 
 -- remainder
 (%) :: Nat -> Nat -> Nat
-(%) = undefined
+n % m =
+  case n -* m of
+    O ->
+      case m -* n of
+        O -> O
+        _ -> n
+    k -> k % m 
 
 -- divides
 -- just for a change, we start by defining the "symbolic" operator
 -- and then define `devides` as a synonym to it
 -- again, outputs: O means False, S O means True
 (|||) :: Nat -> Nat -> Nat
-(|||) = undefined
+O ||| O = S O 
+O ||| (S _ ) = O   
+a ||| b = isZero (b % a)
+
+infix 3 ||| 
 
 -- x `absDiff` y = |x - y|
 -- (Careful here: this - is the actual minus operator we know from the integers!)
 absDiff :: Nat -> Nat -> Nat
-absDiff = undefined
+absDiff x y = (x -* y) + (y -* x)
 
 (|-|) :: Nat -> Nat -> Nat
 (|-|) = absDiff
 
 factorial :: Nat -> Nat
-factorial = undefined
+factorial O = S O
+factorial (S n) = (S n) * factorial n 
 
 -- signum of a number (-1, 0, or 1)
 sg :: Nat -> Nat
-sg = undefined
+sg O = O
+sg (S _) = S O 
+
 
 -- lo b a is the floor of the logarithm base b of a
-lo :: Nat -> Nat -> Nat
-lo = undefined
+maiorOuIgual :: Nat -> Nat -> Nat -- fiz uma função auxiliar para comparar dois Nats
+maiorOuIgual _ O = S O
+maiorOuIgual O (S _) = O
+maiorOuIgual (S n) (S m) = maiorOuIgual n m
 
+lo :: Nat -> Nat -> Nat
+lo O _ = undefined
+lo (S O) _ = undefined
+lo _ O     = O 
+lo b a =
+  case maiorOuIgual a b of
+    O -> O
+    S O -> S (lo b (a / b))
 
