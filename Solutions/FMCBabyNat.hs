@@ -34,44 +34,74 @@ infixl 6 +
 
 -- Output: O means False, S O means True
 isZero :: Nat -> Nat
-isZero = undefined
+isZero O = S O
+isZero (S _) = O
 
 -- pred is the predecessor but we define zero's to be zero
 pred :: Nat -> Nat
-pred = undefined
+pred O = O 
+pred (S m) = m 
 
 -- Output: O means False, S O means True
 even :: Nat -> Nat
-even = undefined
+even O         = S O -- Zero é par, então retorna Verdadeiro (S O)
+even (S O)     = O   -- Um é ímpar, então retorna Falso (O)
+even (S (S m)) = even m
+
+
 
 odd :: Nat -> Nat
-odd = undefined
+odd n = isZero (even n)
 
 -- This is called the dotminus or monus operator
 -- (also: proper subtraction, arithmetic subtraction, ...).
 -- It behaves like subtraction, except that it returns 0
 -- when "normal" subtraction would return a negative number.
 monus :: Nat -> Nat -> Nat
-monus = undefined
+monus m O = m
+monus O n = O
+monus (S n) (S m) = monus n m
+
 
 (-*) :: Nat -> Nat -> Nat
 (-*) = monus
 
 -- multiplication
 (*) :: Nat -> Nat -> Nat
-(*) = undefined
+_ * O = O
+n * (S m) = n + (n * m)
+
 
 infixl 7 *
 
 -- exponentiation
 (^) :: Nat -> Nat -> Nat
-(^) = undefined
+_ ^ O     = S O -- condição: qualquer número elevado a 0 é 1
+n ^ (S m) = n * (n ^ m)
+infixr 8 ^  
 
--- decide: infix? ? ^
+-- acossiei pela direita o operador ^
+
 
 -- quotient
 (/) :: Nat -> Nat -> Nat
-(/) = undefined
+_ / O = undefined
+n / m =
+  case n -* m of
+    O ->
+      case m -* n of
+        O -> S O
+        _ -> O
+    S k ->
+      S ((S k) / m)
+
+infixl 7 / -- parei por hoje..
+
+{- primeira tentativa -- error
+ O / _ = O
+n / m | isZero (n <= m) == O = S O + ((n -* m) / m)
+      | otherwise            = O
+infixl 7 /  -} 
 
 -- remainder
 (%) :: Nat -> Nat -> Nat
@@ -102,4 +132,5 @@ sg = undefined
 -- lo b a is the floor of the logarithm base b of a
 lo :: Nat -> Nat -> Nat
 lo = undefined
+
 
