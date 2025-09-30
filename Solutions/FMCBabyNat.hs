@@ -93,7 +93,7 @@ n / m =
         O -> S O
         _ -> O
     S k ->
-      S ((S k) / m) -- aqui consegui fazer a recursão
+      S (S k / m) -- aqui consegui fazer a recursão
 infixl 7 / 
 
 
@@ -128,12 +128,12 @@ absDiff x y = (x -* y) + (y -* x)
 
 factorial :: Nat -> Nat
 factorial O = S O
-factorial (S n) = (S n) * factorial n 
+factorial (S n) = S n * factorial n 
 
 -- signum of a number (-1, 0, or 1)
 sg :: Nat -> Nat
 sg O = O
-sg (S _) = S O 
+sg (S _ ) = S O 
 
 
 -- lo b a is the floor of the logarithm base b of a

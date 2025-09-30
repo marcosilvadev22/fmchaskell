@@ -34,23 +34,36 @@ instance Show Nat where
 
     -- zero  should be shown as O
     -- three should be shown as SSSO
-    show = undefined
+    show O = "O"
+    show (S n) = "S" ++ show n
 
 instance Eq Nat where
 
-    (==) = undefined
+    (==) :: Nat -> Nat -> Bool
+    O == O = True
+    (S m) == (S n) = m == n
+    _ == _ = False
 
 instance Ord Nat where
 
-    (<=) = undefined
+    (<=) :: Nat -> Nat -> Bool
+    O <= _ = True
+    (S _) <= O = False
+    (S m) <= (S n) = m <= n
 
     -- Ord does not REQUIRE defining min and max.
     -- Howevener, you should define them WITHOUT using (<=).
     -- Both are binary functions: max m n = ..., etc.
 
-    min = undefined
+    min :: Nat -> Nat -> Nat
+    min O n = O
+    min m O = O
+    min (S m) (S n) = S (min m n)
 
-    max = undefined
+    max :: Nat -> Nat -> Nat
+    max O n = n 
+    max m O = m
+    max (S m) (S n) = S (max m n)
 
 
 ----------------------------------------------------------------
@@ -72,19 +85,21 @@ eight = S seven
 -- internalized predicates
 ----------------------------------------------------------------
 
-isZero :: Nat -> Bool
-isZero = undefined
+isZero :: Nat -> Nat
+isZero O = S O
+isZero (S _ ) = O
 
--- pred is the predecessor but we define zero's to be zero
 pred :: Nat -> Nat
-pred = undefined
+pred O = O 
+pred (S m ) = m 
 
-even :: Nat -> Bool
-even = undefined
+even :: Nat -> Nat
+even O = S O
+even (S O) = O   
+even (S (S m)) = even m
 
-odd :: Nat -> Bool
-odd = undefined
-
+odd :: Nat -> Nat
+odd n = isZero (even n)
 
 ----------------------------------------------------------------
 -- operations
@@ -92,72 +107,112 @@ odd = undefined
 
 -- addition
 (<+>) :: Nat -> Nat -> Nat
-(<+>) = undefined
+n <+> O   = n
+n <+> (S m) = S (n <+> m) 
 
 -- This is called the dotminus or monus operator
 -- (also: proper subtraction, arithmetic subtraction, ...).
 -- It behaves like subtraction, except that it returns 0
 -- when "normal" subtraction would return a negative number.
 monus :: Nat -> Nat -> Nat
-monus = undefined
+monus m O = m
+monus O n = O
+monus (S n) (S m) = monus n m
 
 (-*) :: Nat -> Nat -> Nat
-(-*) = undefined
+(-*) = monus
 
 -- multiplication
 times :: Nat -> Nat -> Nat
-times = undefined
+times n O = O
+times n (S m) = n <+> (n `times` m)
 
 (<*>) :: Nat -> Nat -> Nat
 (<*>) = times
 
 -- power / exponentiation
 pow :: Nat -> Nat -> Nat
-pow = undefined
+pow n O = S O
+pow n (S m) = n <*> (n `pow` m)
 
 exp :: Nat -> Nat -> Nat
-exp = undefined
+exp = pow
 
 (<^>) :: Nat -> Nat -> Nat
-(<^>) = undefined
+(<^>) = exp
 
 -- quotient
 (</>) :: Nat -> Nat -> Nat
-(</>) = undefined
+(</>) = (//)
+_ // O = undefined
+n // m =
+  case n -* m of
+    O ->
+      case m -* n of
+        O -> S O
+        _ -> O
+    S k ->
+      S (S k // m)
+
 
 -- remainder
 (<%>) :: Nat -> Nat -> Nat
-(<%>) = undefined
+(<%>) = (%%)
+n %% m =
+  case n -* m of
+    O ->
+      case m -* n of
+        O -> O
+        _ -> n
+    k -> k %% m 
 
 -- euclidean division
 eucdiv :: (Nat, Nat) -> (Nat, Nat)
-eucdiv = undefined
+eucdiv (n, m) = (n // m, n %% m)
 
 -- divides
-(<|>) :: Nat -> Nat -> Bool
-(<|>) = undefined
+divides :: Nat -> Nat -> Bool
+divides O (S _) = False
+divides _ O     = True
+divides a b = (b %% a) == O
 
-divides = (<|>)
+(<|>) :: Nat -> Nat -> Bool
+(<|>) = divides
 
 
 -- distance between nats
 -- x `dist` y = |x - y|
 -- (Careful here: this - is the real minus operator!)
 dist :: Nat -> Nat -> Nat
-dist = undefined
+dist = absDiff
+absDiff x y = (x -* y) <+> (y -* x)
 
 (|-|) = dist
 
 factorial :: Nat -> Nat
-factorial = undefined
+factorial O = S O
+factorial (S n) = S n <*> factorial n 
 
--- signum of a number (-1, 0, or 1)
 sg :: Nat -> Nat
-sg = undefined
+sg O = O
+sg (S _ ) = S O 
+
 
 -- lo b a is the floor of the logarithm base b of a
+maiorOuIgual :: Nat -> Nat -> Nat -- fiz uma função auxiliar para comparar dois Nats
+maiorOuIgual _ O = S O
+maiorOuIgual O (S _) = O
+maiorOuIgual (S n) (S m) = maiorOuIgual n m
+
 lo :: Nat -> Nat -> Nat
-lo = undefined
+lo O _ = undefined
+lo (S O) _ = undefined
+lo _ O     = O 
+lo b a =
+  case maiorOuIgual a b of
+    O -> O
+    S O -> S (lo b (a // b))
+
 
 
 ----------------------------------------------------------------
@@ -168,10 +223,14 @@ lo = undefined
 -- Do NOT use the following functions in the definitions above!
 
 toNat :: Integral a => a -> Nat
-toNat = undefined
+toNat n 
+    | n < 0     = error "não pode converter negativos para Nat"
+    | n == 0    = O
+    | otherwise = S (toNat (n - 1))
 
 fromNat :: Integral a => Nat -> a
-fromNat = undefined
+fromNat O = 0
+fromNat (S n) = 1 + fromNat n
 
 
 -- Voilá: we can now easily make Nat an instance of Num.
@@ -179,11 +238,11 @@ instance Num Nat where
 
     (+) = (<+>)
     (*) = (<*>)
-    (-) = (<->)
+    (-) = (-*)
     abs n = n
     signum = sg
     fromInteger x
-      | x < 0     = undefined
-      | x == 0    = undefined
-      | otherwise = undefined
+        | x < 0     = error "não pode ser negativo"
+        | x == 0    = O
+        | otherwise = S (fromInteger (x - 1))
 
