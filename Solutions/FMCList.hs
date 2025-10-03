@@ -58,28 +58,37 @@ write [u,v]     for our u `Cons` (v `Cons` Nil)
 -}
 
 head :: [a] -> a
-head = undefined
+head (x:_) = x
+head [] = error "corpo vazio"
 
 tail :: [a] -> [a]
-tail = undefined
+tail [_] = []
+tail (_:xs) = xs
+tail [] = error "corpo vazio"
 
 null :: [a] -> Bool
-null = undefined
+null [] = True
+null (_:_) = False
 
 length :: Integral i => [a] -> i
-length = undefined
+length [] = 0
+length (_:xs) = 1 + length xs
 
 sum :: Num a => [a] -> a
-sum = undefined
+sum [] = 0
+sum (x:xs) = x + sum xs
 
 product :: Num a => [a] -> a
-product = undefined
+product [] = 1
+product (x:xs) = x * product xs
 
 reverse :: [a] -> [a]
-reverse = undefined
+reverse [] = []
+reverse (x:xs) = reverse xs ++ [x]
 
 (++) :: [a] -> [a] -> [a]
-(++) = undefined
+(++) [] ys = ys
+(++) (x:xs) ys = x : (xs ++ ys)
 
 -- right-associative for performance!
 -- (what?!)
@@ -87,7 +96,8 @@ infixr 5 ++
 
 -- (snoc is cons written backwards)
 snoc :: a -> [a] -> [a]
-snoc = undefined
+snoc x xs = xs ++ [x]
+infixr 5 `snoc`
 
 (<:) :: [a] -> a -> [a]
 (<:) = flip snoc
@@ -102,42 +112,101 @@ xs +++ (y:ys) = (xs +++ [y]) +++ ys
 -- (hmm?!)
 infixl 5 +++
 
--- minimum :: Ord a => [a] -> a
--- maximum :: Ord a => [a] -> a
+{- minimum :: Ord a => [a] -> a
+minimum [] = error "corpo vazio"
+minimum [x] = x
+minimum (x:xs) = min x (minimum xs)
 
--- take
--- drop
+maximum :: Ord a => [a] -> a
+maximum [] = error "corpo vazio"
+maximum [x] = x
+maximum (x:xs) = max x (maximum xs)
 
--- takeWhile
+take :: Integral i => i -> [a] -> [a]
+take n _ | n <= 0 = []
+take _ [] = []
+take n (x:xs) = x : take (n-1) xs
+
+drop :: Integral i => i -> [a] -> [a]
+drop n xs | n <= 0 = xs
+drop _ [] = []
+drop n (_:xs) = drop (n-1) xs
+
+takeWhile :: (a -> Bool) -> [a] -> [a]
+takeWhile _ [] = []
+takeWhile p (x:xs) | p x       = x : takeWhile p xs
+                    | otherwise = []
+
 -- dropWhile
 
--- tails
--- init
--- inits
+tails :: [a] -> [[a]]
+tails [] = [[]]
+tails xs@(_:xs') = xs : tails xs'
 
--- subsequences
+init :: [a] -> [a]
+init [] = error "corpo vazio"
+init [_] = []
+init (x:xs) = x : init xs
 
--- any
--- all
+inits :: [a] -> [[a]]
+inits [] = [[]]
+inits xs@(_:xs') = [] : map (head xs :) (inits (init xs)) -- não gostei do xs@..
 
--- and
--- or
 
--- concat
+subsequences :: [a] -> [[a]]
+subsequences [] = [[]]
+subsequences (x:xs) = let subs = subsequences xs in subs ++ map (x:) subs -- não gostei
+
+all :: (a -> Bool) -> [a] -> Bool
+all _ [] = True
+all p (x:xs) = p x && all p xs
+any :: (a -> Bool) -> [a] -> Bool
+any _ [] = False
+any p (x:xs) = p x || any p xs 
+
+and :: [Bool] -> Bool
+and [] = True
+and (x:xs) = x && and xs
+or :: [Bool] -> Bool
+or [] = False
+or (x:xs) = x || or xs
+
+concat :: [[a]] -> [a]
+concat [] = []
+concat (x:xs) = x ++ concat xs -}
+
 
 -- elem using the funciton 'any' above
 
 -- elem': same as elem but elementary definition
 -- (without using other functions except (==))
 
--- (!!)
+(!!) :: [a] -> Int -> a
+(!!) xs n | n < 0 = error "índice negativo"
+(!!) [] _ = error "corpo vazio"
+(!!) (x:_) 0 = x
+(!!) (_:xs) n = xs !! (n-1)
 
--- filter
--- map
+{- filter :: (a -> Bool) -> [a] -> [a]
+filter _ [] = []
+filter p (x:xs) | p x       = x : filter p xs
+                | otherwise = filter p xs -- não gostei muito dessa solução
+map:: (a -> b) -> [a] -> [b]
+map _ [] = []
+map f (x:xs) = f x : map f xs -- vou olhar depois 
 
--- cycle
--- repeat
--- replicate
+
+cycle :: [a] -> [a
+cycle [] = error "corpo vazio"
+cycle xs = xs ++ cycle xs --  conferir depois -}
+
+repeat :: a -> [a]
+repeat x = x : repeat x
+replicate :: Integral i => i -> a -> [a]
+replicate n x | n <= 0 = []
+              | otherwise = x : replicate (n-1) x 
+
+
 
 -- isPrefixOf
 -- isInfixOf
@@ -149,9 +218,10 @@ infixl 5 +++
 -- intercalate
 -- nub
 
--- splitAt
--- what is the problem with the following?:
--- splitAt n xs  =  (take n xs, drop n xs)
+splitAt :: Integral i => i -> [a] -> ([a], [a])
+splitAt n xs  =  (take n xs, drop n xs)
+infix 5 `splitAt`
+
 
 -- break
 
@@ -163,8 +233,12 @@ infixl 5 +++
 -- transpose
 
 -- checks if the letters of a phrase form a palindrome (see below for examples)
+normalize :: String -> String
+normalize s = [C.toLower c | c <- s, C.isAlphaNum c]
+
 palindrome :: String -> Bool
-palindrome = undefined
+palindrome s = normalize s == reverse (normalize s)
+
 
 {-
 
