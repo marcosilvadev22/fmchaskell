@@ -1,4 +1,10 @@
 {-# LANGUAGE GADTs #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use foldr" #-}
+{-# HLINT ignore "Eta reduce" #-}
+{-# HLINT ignore "Avoid lambda using `infix`" #-}
+{-# HLINT ignore "Use elem" #-}
+{-# HLINT ignore "Use infix" #-}
 
 module FMCList where
 
@@ -59,12 +65,11 @@ write [u,v]     for our u `Cons` (v `Cons` Nil)
 
 head :: [a] -> a
 head (x:_) = x
-head [] = error "corpo vazio"
+head [] = error "lista vazia"
 
 tail :: [a] -> [a]
-tail [_] = []
 tail (_:xs) = xs
-tail [] = error "corpo vazio"
+tail [] = error "lista vazia"
 
 null :: [a] -> Bool
 null [] = True
@@ -96,29 +101,29 @@ infixr 5 ++
 
 -- (snoc is cons written backwards)
 snoc :: a -> [a] -> [a]
-snoc x xs = xs ++ [x]
-infixr 5 `snoc`
+snoc x [] = [x]
+snoc x (y:ys) = y : snoc x ys
 
 (<:) :: [a] -> a -> [a]
 (<:) = flip snoc
 
 -- different implementation of (++)
 (+++) :: [a] -> [a] -> [a]
-xs +++ []     = xs
-xs +++ [y]    = xs <: y
+xs +++ [] = xs
+xs +++ [y] = xs <: y
 xs +++ (y:ys) = (xs +++ [y]) +++ ys
 
 -- left-associative for performance!
 -- (hmm?!)
 infixl 5 +++
 
-{- minimum :: Ord a => [a] -> a
-minimum [] = error "corpo vazio"
+minimum :: Ord a => [a] -> a
+minimum [] = error "lista vazia"
 minimum [x] = x
 minimum (x:xs) = min x (minimum xs)
 
 maximum :: Ord a => [a] -> a
-maximum [] = error "corpo vazio"
+maximum [] = error "lista vazia"
 maximum [x] = x
 maximum (x:xs) = max x (maximum xs)
 
@@ -134,32 +139,40 @@ drop n (_:xs) = drop (n-1) xs
 
 takeWhile :: (a -> Bool) -> [a] -> [a]
 takeWhile _ [] = []
-takeWhile p (x:xs) | p x       = x : takeWhile p xs
-                    | otherwise = []
+takeWhile p (x:xs) 
+  | p x = x : takeWhile p xs
+  | otherwise = []
 
--- dropWhile
+dropWhile :: (a -> Bool) -> [a] -> [a]
+dropWhile _ [] = []
+dropWhile p (x:xs)
+  | p x = dropWhile p xs
+  | otherwise = x:xs
 
 tails :: [a] -> [[a]]
 tails [] = [[]]
-tails xs@(_:xs') = xs : tails xs'
+tails (x:xs) = (x:xs) : tails xs
 
 init :: [a] -> [a]
-init [] = error "corpo vazio"
+init [] = error "lista vazia"
 init [_] = []
 init (x:xs) = x : init xs
 
 inits :: [a] -> [[a]]
 inits [] = [[]]
-inits xs@(_:xs') = [] : map (head xs :) (inits (init xs)) -- não gostei do xs@..
+inits (x:xs) = [] : map (x:) (inits xs)
 
 
 subsequences :: [a] -> [[a]]
 subsequences [] = [[]]
-subsequences (x:xs) = let subs = subsequences xs in subs ++ map (x:) subs -- não gostei
+subsequences (x:xs) = 
+  let subs = subsequences xs 
+  in subs ++ map (x:) subs 
 
 all :: (a -> Bool) -> [a] -> Bool
 all _ [] = True
 all p (x:xs) = p x && all p xs
+
 any :: (a -> Bool) -> [a] -> Bool
 any _ [] = False
 any p (x:xs) = p x || any p xs 
@@ -167,70 +180,144 @@ any p (x:xs) = p x || any p xs
 and :: [Bool] -> Bool
 and [] = True
 and (x:xs) = x && and xs
+
 or :: [Bool] -> Bool
 or [] = False
 or (x:xs) = x || or xs
 
 concat :: [[a]] -> [a]
 concat [] = []
-concat (x:xs) = x ++ concat xs -}
+concat (x:xs) = x ++ concat xs 
 
 
 -- elem using the funciton 'any' above
+elem :: Eq a => a -> [a] -> Bool
+elem y ys = any (== y) ys
 
 -- elem': same as elem but elementary definition
 -- (without using other functions except (==))
+elem' :: Eq a => a -> [a] -> Bool
+elem' _ [] = False
+elem' y (x:xs) 
+    | y == x    = True
+    | otherwise = elem' y xs
 
+    -- parei aqui
 (!!) :: [a] -> Int -> a
-(!!) xs n | n < 0 = error "índice negativo"
-(!!) [] _ = error "corpo vazio"
-(!!) (x:_) 0 = x
-(!!) (_:xs) n = xs !! (n-1)
+[] !! _ = error "lista vazia"
+(x : xs) !! 0 = x
+(x : xs) !! n
+  | n < 0     = error "índice negativo"
+  | otherwise = xs !! (n - 1)
 
-{- filter :: (a -> Bool) -> [a] -> [a]
+filter :: (a -> Bool) -> [a] -> [a]
 filter _ [] = []
-filter p (x:xs) | p x       = x : filter p xs
-                | otherwise = filter p xs -- não gostei muito dessa solução
+filter p (x:xs) 
+  | p x = x : filter p xs
+  | otherwise = filter p xs 
+
 map:: (a -> b) -> [a] -> [b]
 map _ [] = []
-map f (x:xs) = f x : map f xs -- vou olhar depois 
+map f (x:xs) = f x : map f xs 
 
 
-cycle :: [a] -> [a
-cycle [] = error "corpo vazio"
-cycle xs = xs ++ cycle xs --  conferir depois -}
+cycle :: [a] -> [a]
+cycle [] = error "lista vazia"
+cycle xs = xs'
+  where
+    xs' = xs ++ xs'
 
 repeat :: a -> [a]
 repeat x = x : repeat x
+
 replicate :: Integral i => i -> a -> [a]
-replicate n x | n <= 0 = []
-              | otherwise = x : replicate (n-1) x 
+replicate n x 
+  | n <= 0 = []
+  | otherwise = x : replicate (n-1) x 
 
 
 
--- isPrefixOf
--- isInfixOf
--- isSuffixOf
+isPrefixOf :: Eq a => [a] -> [a] -> Bool
+isPrefixOf [] _ = True
+isPrefixOf _ [] = False
+isPrefixOf (x:xs) (y:ys) = (x == y)
+  && isPrefixOf xs ys
 
--- zip
--- zipWith
+isInfixOf :: Eq a => [a] -> [a] -> Bool
+isInfixOf [] _ = True
+isInfixOf _ [] = False
+isInfixOf xs ys = isPrefixOf xs ys || isInfixOf xs (tail ys)
 
--- intercalate
--- nub
-
-splitAt :: Integral i => i -> [a] -> ([a], [a])
-splitAt n xs  =  (take n xs, drop n xs)
-infix 5 `splitAt`
+isSuffixOf :: Eq a => [a] -> [a] -> Bool
+isSuffixOf xs ys = isPrefixOf (reverse xs) (reverse ys)
 
 
--- break
+zip :: [a] -> [b] -> [(a,b)]
+zip [] _ = []
+zip _ [] = []
+zip (x:xs) (y:ys) = (x,y) : zip xs ys
 
--- lines
--- words
--- unlines
--- unwords
+zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
+zipWith _ [] _ = []
+zipWith _ _ [] = []
+zipWith f (x:xs) (y:ys) = f x y : zipWith f xs ys
 
--- transpose
+intercalate :: [a] -> [[a]] -> [a]
+intercalate _ [] = []
+intercalate _ [x] = x
+intercalate sep (x:xs) = x ++ sep ++ intercalate sep xs
+
+nub :: Eq a => [a] -> [a]
+nub [] = []
+nub (x:xs) = x : nub (filter (\y -> y /= x) xs)
+
+splitAt :: Int -> [a] -> ([a],[a])
+splitAt _ [] = ([], [])
+splitAt 0 xs = ([], xs)
+splitAt n (x : xs) =
+  let (ys, zs) = splitAt (n - 1) xs
+  in (x : ys, zs)
+
+break :: (a -> Bool) -> [a] -> ([a],[a])
+break _ [] = ([], [])
+break p (y:ys)
+  | p y = ([], y:ys)
+  | otherwise = 
+    let (as, bs) = break p ys
+    in (y:as, bs)
+
+lines :: String -> [String]
+lines [] = []
+lines s =
+  let (l, s') = break (== '\n') s
+  in l : case s' of
+          [] -> []
+          (_:xs) -> lines xs
+
+words :: String -> [String]
+words s =
+    let s' = dropWhile C.isSpace s
+    in if null s'
+        then []
+        else
+            let (palavra, resto) = break C.isSpace s'
+            in palavra : words resto
+
+unlines :: [String] -> String
+unlines [] = []
+unlines (x:xs) = x ++ '\n' : unlines xs
+
+unwords :: [String] -> String
+unwords [] = []
+unwords [x] = x
+unwords (x:xs) = x ++ ' ' : unwords xs
+
+transpose :: [[a]] -> [[a]]
+transpose [] = []
+transpose xs
+  | any null xs = []
+  | otherwise = map head xs : transpose (map tail xs)
+
 
 -- checks if the letters of a phrase form a palindrome (see below for examples)
 normalize :: String -> String
